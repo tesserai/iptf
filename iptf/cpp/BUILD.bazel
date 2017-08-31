@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+# Description:
+# IPFS file system implementation.
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+licenses(["notice"])  # Apache 2.0
+
+cc_test(
+    name = "file_system_test",
+    size = "small",
+    srcs = [
+      "file_system_test.cc",
+      "//iptf/go/c_api:c_api_exports",
+    ],
+    linkstatic=1,
+    deps = [
+        "@org_tensorflow//tensorflow/core:lib",
+        "@org_tensorflow//tensorflow/core:test",
+        "//iptf/cpp/tensorflow_test_util:tensorflow_test_main",
+    ],
+)

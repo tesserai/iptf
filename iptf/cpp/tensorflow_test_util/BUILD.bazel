@@ -1,0 +1,23 @@
+# Heavily inspired by :test_main in @org_tensorflow//tensorflow/core/platform/
+# unfortunately, that :test_main has visibility tensorflow:internal. So
+# we reproduce it here.
+
+load(
+    "//iptf:iptf.bzl",
+    "iptf_copts",
+)
+
+# Main program for tests
+cc_library(
+    name = "tensorflow_test_main",
+    testonly = 1,
+    linkstatic = 1,
+    srcs = ["tensorflow_test_main.cc"],
+    copts = iptf_copts(),
+    linkopts = ["-lm"],
+    visibility = ["//iptf:internal"],
+    deps = [
+        "@org_tensorflow//tensorflow/core:lib",
+        "@org_tensorflow//tensorflow/core:test",
+    ],
+)

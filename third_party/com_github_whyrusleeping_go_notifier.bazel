@@ -1,0 +1,45 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_prefix", "go_test")
+
+go_prefix("github.com/whyrusleeping/go-notifier")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["notifier.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":Godeps/_workspace/src/github.com/jbenet/goprocess_go_library",
+        ":Godeps/_workspace/src/github.com/jbenet/goprocess/ratelimit_go_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["notifier_test.go"],
+    library = ":go_default_library",
+)
+
+
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_prefix", "go_test")
+
+go_library(
+    name = "Godeps/_workspace/src/github.com/jbenet/goprocess_go_library",
+    importpath = "github.com/whyrusleeping/go-notifier/Godeps/_workspace/src/github.com/jbenet/goprocess",
+    srcs = [
+        "Godeps/_workspace/src/github.com/jbenet/goprocess/goprocess.go",
+        "Godeps/_workspace/src/github.com/jbenet/goprocess/impl-mutex.go",
+        "Godeps/_workspace/src/github.com/jbenet/goprocess/link.go",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+go_library(
+    name = "Godeps/_workspace/src/github.com/jbenet/goprocess/ratelimit_go_library",
+    importpath = "github.com/whyrusleeping/go-notifier/Godeps/_workspace/src/github.com/jbenet/goprocess/ratelimit",
+    srcs = [
+        "Godeps/_workspace/src/github.com/jbenet/goprocess/ratelimit/ratelimit.go",
+    ],
+    deps = [
+        ":Godeps/_workspace/src/github.com/jbenet/goprocess_go_library",
+    ],
+    visibility = ["//visibility:private"],
+)

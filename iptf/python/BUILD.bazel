@@ -1,0 +1,28 @@
+py_test(
+    name = "file_system_test",
+    size = "small",
+    srcs = ["file_system_test.py"],
+    main = "file_system_test.py",
+    srcs_version = "PY2AND3",
+    deps = [
+        "@org_tensorflow//tensorflow:tensorflow_py",
+        "//iptf:iptf_py",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+
+py_binary(
+    name = "iptf",
+    srcs = [
+        "main.py",
+    ],
+    main = "main.py",
+    srcs_version = "PY2AND3",
+    deps = [
+        "@org_tensorflow//tensorflow:tensorflow_py",
+        "@org_tensorflow//tensorflow/python/debug:debug_py",
+        "@org_tensorflow_tensorboard//tensorboard",
+        "//iptf:iptf_py",
+    ],
+)

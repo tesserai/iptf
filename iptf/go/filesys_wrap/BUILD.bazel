@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "wrap.go",
+    ],
+    deps = [
+        "//iptf/go/filesys:go_default_library",
+        "//iptf/go/api:go_default_library",
+    ],
+    visibility = ["//iptf/go/c_api:__pkg__"],
+)

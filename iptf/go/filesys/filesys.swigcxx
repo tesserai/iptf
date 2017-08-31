@@ -1,0 +1,130 @@
+// This file defines the nuanced semantics we use to map from TensorFlow's
+// C++ concepts to our own Golang discipline. Since we're implementing a
+// high performance file system with a narrow interface, we handle memory
+// management a bit differently than many documentation examples recommend.
+
+%module(directors="1") filesys
+
+%{
+#include "iptf/go/filesys/heap_read_only_memory_region.h"
+#include "iptf/go/filesys/singleton_file_system_factory.h"
+
+#include "tensorflow/core/platform/file_system.h"
+
+// This is an anti-pattern that we'd love to drop, but we haven't been able to
+// figure out how to get SWIG's code generation logic to generate code that
+// includes a namespace that isn't already in the explicit type signatures we're
+// bridging to.
+using namespace tensorflow;
+
+%}
+
+// tensorflow::RandomAccessFile::Read is a work horse and is therefore
+// thoughtful about how many times data is copied around. It provides a
+// pre-allocated n bytes of a char* scratch buffer to make your StringPiece
+// result out of.
+// We bridge this triple, to a Go *[]byte. The []byte is _actually backed
+// by the given char*_. This violates many of Go's internal assumptions,
+// so we must be careful to not use this slice in any code outside of a
+// Read call.
+%typemap(gotype) (size_t n, StringPiece* result, char* scratch) "*[]byte"
+%typemap(directorin) (size_t n, StringPiece* result, char* scratch)
+%{ $input = new _goslice_{(void*)$3,(intgo)$1,(intgo)$1}; %}
+%typemap(in) (size_t n, StringPiece* result, char* scratch)
+%{
+  $1 = ($1_ltype)$input->cap;
+  $2 = new ($*2_ltype);
+  $3 = ($3_ltype)$input->array;
+%}
+%typemap(freearg) (size_t n, StringPiece* result, char* scratch)
+%{ delete $2; %}
+%typemap(argout) (size_t n, StringPiece* result, char* scratch)
+%{
+  $input->array = (void*)$2->data();
+  $input->len = $2->size();
+  $input->cap = $2->size();
+%}
+%typemap(directorargout) (size_t n, StringPiece* result, char* scratch)
+%{ *$2 = $*2_ltype((const char*)$input->array, (size_t)$input->len); %}
+%feature("director") tensorflow::RandomAccessFile;
+
+
+// tensorflow::WritableFile is also a performance-sensitive interface. We
+// unwrap the given StringPiece and use its underlying data to back a
+// Go []byte. Like in tensorflow::RandomAccessFile::Read(...), we must be
+// careful not to use this slice outside the method call that receives it.
+%typemap(gotype) (const StringPiece& data) "[]byte"
+%typemap(directorin) (const StringPiece& data)
+%{ $input = _goslice_{(void*)$1.data(),(intgo)$1.size(),(intgo)$1.size()}; %}
+%typemap(in) (const StringPiece& data)
+%{ $1 = new $*1_ltype((const char*)$input.array, (size_t)$input.len); %}
+%typemap(freearg) (const StringPiece& data)
+%{ delete $1; %}
+%feature("director") tensorflow::WritableFile;
+
+// tensorflow::FileSystem uses std::vector<tensorflow::string> to return
+// lists of child entries in directories. The SWIG incantation to make
+// that work is below.
+%include "std_vector.i"
+%include "tf_string.i"
+%template(StringVector) std::vector<tensorflow::string>;
+
+// Tensorflow actually type aliases a number of primitive types. We need
+// to tell SWIG about these aliases.
+%import "tensorflow/core/platform/default/integral_types.h"
+
+// tensorflow::FileStatistics is a return parameter in tensorflow::FileSystem.
+%include "tensorflow/core/platform/file_statistics.h"
+
+%feature("director") tensorflow::FileSystem;
+
+// Our poor man's implementation of tensorflow::ReadOnlyMemoryRegion
+%include "iptf/go/filesys/heap_read_only_memory_region.h"
+
+// We only need to support a few methods in tensorflow::Env, call them out.
+%include "tf_env.i"
+
+// TensorFlow makes heavy use of tensorflow::Status and a number of specific
+// error codes. Use SWIG's templating logic to make the appropriate Status
+// creation helpers work for Go strings.
+%include "tensorflow/core/lib/core/errors.h"
+%template(StatusErrorCancelled) tensorflow::errors::Cancelled<tensorflow::string>;
+%template(StatusErrorInvalidArgument) tensorflow::errors::InvalidArgument<tensorflow::string>;
+%template(StatusErrorNotFound) tensorflow::errors::NotFound<tensorflow::string>;
+%template(StatusErrorAlreadyExists) tensorflow::errors::AlreadyExists<tensorflow::string>;
+%template(StatusErrorResourceExhausted) tensorflow::errors::ResourceExhausted<tensorflow::string>;
+%template(StatusErrorUnavailable) tensorflow::errors::Unavailable<tensorflow::string>;
+%template(StatusErrorFailedPrecondition) tensorflow::errors::FailedPrecondition<tensorflow::string>;
+%template(StatusErrorOutOfRange) tensorflow::errors::OutOfRange<tensorflow::string>;
+%template(StatusErrorUnimplemented) tensorflow::errors::Unimplemented<tensorflow::string>;
+%template(StatusErrorInternal) tensorflow::errors::Internal<tensorflow::string>;
+%template(StatusErrorAborted) tensorflow::errors::Aborted<tensorflow::string>;
+%template(StatusErrorDeadlineExceeded) tensorflow::errors::DeadlineExceeded<tensorflow::string>;
+%template(StatusErrorDataLoss) tensorflow::errors::DataLoss<tensorflow::string>;
+%template(StatusErrorUnknown) tensorflow::errors::Unknown<tensorflow::string>;
+%template(StatusErrorPermissionDenied) tensorflow::errors::PermissionDenied<tensorflow::string>;
+%template(StatusErrorUnauthenticated) tensorflow::errors::Unauthenticated<tensorflow::string>;
+
+// tensorflow::FileSystem uses std::unique_ptr for some return parameters.
+%include "std_unique_ptr.i"
+%template(UniquePointerReadOnlyMemoryRegion) std::unique_ptr<tensorflow::ReadOnlyMemoryRegion>;
+%template(UniquePointerRandomAccessFile) std::unique_ptr<tensorflow::RandomAccessFile>;
+%template(UniquePointerWritableFile) std::unique_ptr<tensorflow::WritableFile>;
+
+// Now that the above has constrained the way SWIG will interperet
+// tensorflow::FileSystem, we can allow SWIG to actually include its
+// header file.
+%include "tensorflow/core/platform/file_system.h"
+
+// TensorFlow documentation recommends the use of a small set of macros to
+// register custom file systems. Unfortunately these macros won't really work
+// for us, since they assume that a simple C++ expression can allocate the
+// appropriate tensorflow::FileSystem class. Instead we define our own
+// function that wraps a given C++ class pointer with a
+// tensorflow::FileSystemRegistry::Factory that just returns the given pointer
+// on every request. This is the same approach that the macro uses internally.
+// For this incantation to work, we need to combine SWIG's template support
+// with knowledge of the internal name SWIG will choose for its director
+// subclass of tensorflow::FileSystem.
+%include "iptf/go/filesys/singleton_file_system_factory.h"
+%template(IptfSingletonFileSystemFactory) iptf::SingletonFileSystemFactory<SwigDirector_FileSystem>;

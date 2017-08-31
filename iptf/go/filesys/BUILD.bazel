@@ -1,0 +1,29 @@
+load('//iptf:go.bzl', "go_swig_library")
+
+go_swig_library(
+    name = "go_default_library",
+    module_name = "filesys",
+    srcs = [
+        "filesys.swigcxx",
+        "heap_read_only_memory_region.h",
+        "heap_slice.go",
+        "lookup_env.go",
+        "std_unique_ptr.i",
+        "tf_env.i",
+        "tf_string.i",
+        "singleton_file_system_factory.h",
+        "std_vector.i",
+    ],
+    cdeps = [
+        "@protobuf//:protobuf_headers",
+        "@org_tensorflow//third_party/eigen3",
+        "@org_tensorflow//tensorflow/core:framework_headers_lib",
+    ],
+    copts = [
+      "-Wno-self-assign", "-Wno-sign-compare", "-Wno-write-strings"
+    ],
+    visibility = [
+      "//iptf/go/c_api:__pkg__",
+      "//iptf/go/filesys_wrap:__pkg__",
+    ],
+)

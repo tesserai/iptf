@@ -1,0 +1,9 @@
+[submodule "tensorflow"]
+	path = tensorflow
+	url = https://github.com/tesserai/tensorflow
+[submodule "tensorboard"]
+	path = tensorboard
+	url = https://github.com/tesserai/tensorboard
+[submodule "go-ipfs"]
+	path = go-ipfs
+	url = https://github.com/tesserai/go-ipfs
