@@ -609,6 +609,16 @@ def iptf_workspace():
       importpath = "github.com/gxed/client_golang",
   )
   go_repository(
+      name = "com_github_gxed_eventfd",
+      commit = "80a92cca79a8041496ccc9dd773fcb52a57ec6f9",
+      importpath = "github.com/gxed/eventfd",
+  )
+  go_repository(
+      name = "com_github_gxed_GoEndian",
+      commit = "0f5c6873267e5abf306ffcdfcfa4bf77517ef4a7",
+      importpath = "github.com/gxed/GoEndian",
+  )
+  go_repository(
       name = "com_github_hashicorp_golang_lru",
       commit = "0a025b7e63adc15a622f29b0b2c4c3848243bbf6",
       importpath = "github.com/hashicorp/golang-lru",

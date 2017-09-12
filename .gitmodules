@@ -7,3 +7,6 @@
 [submodule "go-ipfs"]
 	path = go-ipfs
 	url = https://github.com/tesserai/go-ipfs
+[submodule "rules_go"]
+	path = rules_go
+	url = https://github.com/tesserai/rules_go

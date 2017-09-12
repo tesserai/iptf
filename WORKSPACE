@@ -11,17 +11,13 @@ local_repository(
 )
 
 local_repository(
-  name = "io_ipfs_go_ipfs",
+  name = "com_github_ipfs_go_ipfs",
   path = "go-ipfs",
 )
 
-http_archive(
-    name = "io_bazel_rules_go",
-    urls = [
-        "https://github.com/bazelbuild/rules_go/archive/0.5.3.tar.gz",
-    ],
-    sha256 = "0281f223a7a2feca80b17514aff0709611ac1a23a32565c6ea71bac8a98317ba",
-    strip_prefix = "rules_go-0.5.3",
+local_repository(
+  name = "io_bazel_rules_go",
+  path = "rules_go",
 )
 
 

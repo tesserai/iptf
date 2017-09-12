@@ -19,6 +19,6 @@ py_library(
     srcs_version = "PY2AND3",
     visibility = ["//visibility:public"],
     data = [
-      "//iptf/go/c_api:libipfs.so",
+      "//iptf/go/c_api:libiptf.so",
     ],
 )

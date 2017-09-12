@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
-# HACK(adamb) This is a weird way to expose the header file needed by libipfs.so.
+# HACK(adamb) This is a weird way to expose the header file needed by libiptf.so.
 #     we should be using some kind of output from go_binary, but it doesn't
 #     seem to have one...
 # cc_inc_library(
@@ -15,7 +15,7 @@ filegroup(
   name = "c_api_exports",
   srcs = [
     "_cgo_export.h",
-    ":libipfs_internal.so",
+    ":libiptf_internal.so",
   ],
   visibility = ["//iptf/cpp:__pkg__"],
 )
@@ -23,26 +23,41 @@ filegroup(
 # filegroup(
 #   name = "c_api_exports",
 #   srcs = [
-#     ":libipfs_internal.so",
+#     ":libiptf_internal.so",
 #     # ":c_api_library"
 #   ],
 #   output_group = "cgo_exports",
 #   visibility = ["//visibility:public"],
 # )
 
+filegroup(
+  name = "libiptf_internal.so",
+  srcs = [
+    ":libiptf_internal",
+  ],
+  output_group = "shared",
+)
+
 go_binary(
-    name = "libipfs_internal.so",
+    name = "libiptf_internal",
     srcs = [
         "main.go",
     ],
     deps = [
       ":c_api_library",
     ],
-    gc_linkopts=["-buildmode=c-shared"],
+)
+
+filegroup(
+  name = "libiptf.so",
+  srcs = [
+    ":libiptf",
+  ],
+  output_group = "shared",
 )
 
 go_binary(
-    name = "libipfs.so",
+    name = "libiptf",
     srcs = [
         "main_autoinit.go",
     ],
@@ -53,7 +68,6 @@ go_binary(
         "//iptf/go/filesys_wrap:go_default_library",
         "//iptf/go/filesys:go_default_library",
     ],
-    gc_linkopts=["-buildmode=c-shared"],
     visibility = ["//visibility:public"],
 )
 
