@@ -1,8 +1,6 @@
 # IPTF
 
-**Please do not share or publicize IPTF yet. We're still working on tests, materials and documentation to support a coherent public launch.**
-
-## A fast, distributed filesystem for TensorFlow models, data, and logs
+## A distributed filesystem for TensorFlow models, data, and logs
 
 IPTF brings the best parts of [IPFS](https://ipfs.io) into the world of TensorFlow. If you're not familiar with IPFS, think of it as a cross between git and BitTorrent: a global peer-to-peer network of machines that provide instant, reliable access to massive datasets.
 
@@ -72,4 +70,4 @@ $ bazel run //iptf/python:iptf -- python foo.py bar
 - [ ] Performance testing
   - [ ] IPFS read/write performance
   - [ ] IPFS network performance
-  - [ ] No memory leaks
+  - [ ] No memory leaks load
